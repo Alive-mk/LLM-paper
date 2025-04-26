@@ -37,6 +37,17 @@ resolution,arbitary,counteract,
 ## model architecture
 
 ```json
-
+point-wise,identical,residual,implemented,facilitate,attend to(关注),
 ```
+
+- 编码器把一个输入序列映射成连续表示序列Z，然后解码器会根据Z按照一步产生一个元素的方式产生一个输出序列。解码器采用的是自回归的方式，在生成下一个符号的的时候会把前面已经生成的符号作为额外的输入。
+
+- 堆叠的自注意力机制和逐点的全连接层。
+
+<img src="pictures\image-20250426224402795.png" alt="image-20250426224402795" style="zoom:67%;" />
+
+- masking
+- shifted right
+
+### encoder and decoder stacks
 
