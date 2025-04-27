@@ -38,7 +38,7 @@ resolution,arbitary,counteract,
 
 ```json
 point-wise,identical,residual,implemented,facilitate,attend to(关注),compatibility function,simultaneously,
-
+pack together,additive,multiplicative,magnitude,gradient,yield,concat,inhibt,
 ```
 
 - 编码器把一个输入序列映射成连续表示序列Z，然后解码器会根据Z按照一步产生一个元素的方式产生一个输出序列。解码器采用的是**自回归**的方式，在生成下一个符号的的时候会把前面已经生成的符号作为额外的输入。
@@ -67,3 +67,24 @@ a third sub-layer performs multi-head attention over the output of the encoder s
 #### Scaled dot-product attention
 
 <img src="pictures\image-20250427110019113.png" alt="image-20250427110019113" style="zoom:67%;" />
+
+<img src="pictures\image-20250427173806174.png" alt="image-20250427173806174" style="zoom:67%;" />
+
+- additive attention
+- ( dot-product ) multiplicative  attention：使用缩放点积注意力既能够使用到快速矩阵乘法的好处又能够避免由于当d_k太大的时候softmax造成的梯度消失的问题。
+- 当d_k较小的时候，两种方法效果差不多，而当d_k较大的时候，加性注意力表现的比乘性注意力更好。
+
+<img src="pictures\image-20250427181234204.png" alt="image-20250427181234204" style="zoom: 80%;" />
+
+<img src="pictures\image-20250427181434900.png" alt="image-20250427181434900" style="zoom: 67%;" />
+
+#### Multi-head attention
+
+<img src="pictures\image-20250427175053701.png" alt="image-20250427175053701" style="zoom: 67%;" />
+
+<img src="pictures\image-20250427181758550.png" alt="image-20250427181758550" style="zoom:67%;" />
+
+<img src="pictures\image-20250427181831701.png" alt="image-20250427181831701" style="zoom: 67%;" />
+
+
+
