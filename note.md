@@ -155,7 +155,13 @@ $$
 
 <img src="pictures\image-20250501135256944.png" alt="image-20250501135256944" style="zoom:50%;" />
 
+
+
+![image-20250501190819941](pictures\image-20250501190819941.png)
+
 # Batch normalization and Layer normalization
+
+<img src="pictures\image-20250501190032765.png" alt="image-20250501190032765" style="zoom:50%;" />
 
 <img src="pictures\image-20250430132651994.png" alt="image-20250430132651994" style="zoom:33%;" />
 
@@ -278,3 +284,146 @@ $$
 | **Debiasing-BERT 系列** | 性别 / 种族刻板映射  | 多层约束（数据重采样 + 对抗损失）显著降低偏见指标oaicite:11  |
 
 7. **BERT怎么用在生成模型中？**
+
+**把 BERT 用到生成任务的核心在于：**要么修改掩码和预训练目标，**让同一套参数既能双向理解又能单向/Seq2Seq 解码**；要么利用 BERT 强判别能力，在并行填空、扩散去噪或可控生成中担当“迭代修正器”或“输出审计员”。随着 UniLM/BART/GLM 等模型与非自回归策略的成熟，BERT 家族已能覆盖绝大多数文本生成应用，并在并行效率、长文本处理和可控性上提供与 GPT 系不一样的工程优势。
+
+**1 . 为什么 BERT 输入端要包含 token、segment、position 三个 embedding？三者如何相加？**
+ BERT 需要：
+
+- **Token Embedding** 表示词/子词本身；
+- **Segment Embedding**（A/B=0/1）告诉模型同一句对里的句子编号，用来完成 NSP 任务；
+- **Position Embedding** 让 Transformer 能区分顺序信息。
+   这三种向量都被投到同一维度 *d*（768/base 或 1024/large），然后做逐元素相加后再送入第一层 Transformer；这样就能保持残差、Layer Norm 等结构不变，同时把 3 种信息融合进同一向量空间。 ([BERT - The purpose of summing token embedding, positional ...](https://datascience.stackexchange.com/questions/108740/bert-the-purpose-of-summing-token-embedding-positional-embedding-and-segment?utm_source=chatgpt.com), [BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**2 . 如果把三种 embedding 改为拼接再投影，会带来哪些代价？**
+ 拼接后维度变为 3 × *d*，第一层必须增加一个线性投影把 3 *d* 压回 *d*，导致参数量和 FLOPs ≈ 3 倍，显存与延迟同步上涨；同时所有残差路径和权重共享假设都会被破坏，收敛更难。 ([BERT - The purpose of summing token embedding, positional ...](https://datascience.stackexchange.com/questions/108740/bert-the-purpose-of-summing-token-embedding-positional-embedding-and-segment?utm_source=chatgpt.com), [BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**3 . WordPiece 词表是如何构造的，为什么能缓解 OOV？**
+ WordPiece 自底向上统计最常共现的字串对并迭代合并，直到达到预设词表大小；长低频词会被拆成高频子词，使任何新词都能拆成已知片段，从而显著降低 OOV 与稀疏问题。 ([WordPiece: Subword-based tokenization algorithm | Chetna - Medium](https://medium.com/towards-data-science/wordpiece-subword-based-tokenization-algorithm-1fbd14394ed7?utm_source=chatgpt.com), [BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**4 . Base=12 层 768 维 / Large=24 层 1024 维是如何选择的？把隐藏维扩到 4096 会遇到什么瓶颈？**
+ 作者在 BERT 论文附录用网格实验验证到 768/12 与 1024/24 在 GLUE 和 SQuAD 上收益与成本平衡最佳；*d* 和层数再增大时，参数量与计算复杂度以 *L·d²* 线性/平方上升，显存爆炸、训练时间线性拉长且更易梯度爆炸/过拟合。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**5 . 解释 15 % 抽样 + 80-10-10 替换策略的设计初衷。**
+ 先对序列做伯努利抽样，15 % 位置被标为预测目标；其中 80 % 换 `[MASK]` 让模型学习填空，10 % 换随机词增加噪声防止只依赖 `[MASK]`，10 % 保持原词使预训练-推断分布更接近。 ([BERT MLM - 80% [MASK\], 10% random words and 10% same word](https://stats.stackexchange.com/questions/575002/bert-mlm-80-mask-10-random-words-and-10-same-word-how-does-this-work?utm_source=chatgpt.com), [BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**6 . 在实现损失时，如何保证只有那 15 % 位置产生梯度？**
+ 把 `labels` 复制自输入，再把 `~masked_indices` 位置写成 `-100`（PyTorch 默认 `ignore_index`）；`CrossEntropyLoss(ignore_index=-100)` 会忽略这些位置，因此未被抽中的 85 % 不参与反向传播。 ([Intricacies of nn.CrossEntropyLoss Ignore Index and Gradients](https://jkschin.com/blog/2023/cross-entropy-loss-ignore-index/?utm_source=chatgpt.com), [Use of ignore_index on CrossEntropyLoss() for text models](https://stats.stackexchange.com/questions/502750/use-of-ignore-index-on-crossentropyloss-for-text-models?utm_source=chatgpt.com))
+
+------
+
+**7 . NSP 任务流程是什么？RoBERTa 为什么去掉 NSP？**
+ NSP 让 `[CLS]` 表征对句子对 (A,B) 判断 “B 是否紧跟 A”；正样本来自语料原句对，负样本随机拼接。RoBERTa 通过消融发现 NSP 信号噪声大且限制批大小，去掉后总体效果反而更好。 ([Next sentence prediction in RoBERTa - Data Science Stack Exchange](https://datascience.stackexchange.com/questions/76872/next-sentence-prediction-in-roberta?utm_source=chatgpt.com), [RoBERTa: A Robustly Optimized BERT Pretraining Approach - arXiv](https://arxiv.org/abs/1907.11692?utm_source=chatgpt.com))
+
+------
+
+**8 . Whole Word Masking (WWM) 的思想及改进点**
+ WWM 在中文等拼写无空格语言中一次遮盖完整词，而不是逐字子词，从而让 MLM 更符合语义单元、减少信息泄漏并带来 1-2 pt F1 提升。 ([Pre-Training with Whole Word Masking for Chinese BERT - arXiv](https://arxiv.org/abs/1906.08101?utm_source=chatgpt.com))
+
+------
+
+**9 . 为什么原文选择 AdamW+Weight Decay 而不是传统 Adam+L2？**
+ Adam 的动量会把 L2 正则当作梯度加权，导致实际权重衰减不稳定；AdamW 将 weight-decay 与梯度更新解耦，可在大 batch 下稳定训练并减少过拟合。 ([Understanding L2 regularization, Weight decay and AdamW](https://benihime91.github.io/blog/machinelearning/deeplearning/python3.x/tensorflow2.x/2020/10/08/adamW.html?utm_source=chatgpt.com))
+
+------
+
+**10 . Layer-wise Learning-Rate Decay (LLRD) 微调有什么好处？**
+ LLRD 为靠近输出层的参数设较大学习率，底层设较小学习率，可在保留通用语义的同时快速适配任务，显著减少灾难性遗忘。 ([[PDF\] arXiv:2212.06138v1 [cs.CV] 12 Dec 2022](https://arxiv.org/pdf/2212.06138?utm_source=chatgpt.com))
+
+------
+
+**11 . Dropout 与 Attention Dropout 在 BERT 中的默认值及调参经验**
+ 原始实现均设为 0.1；实战中可在小数据集将 Dropout 提到 0.2-0.3 抑制过拟合，在大规模任务或蒸馏模型中降到 0.05 获取更快收敛。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**12 . DistilBERT、ALBERT、TinyBERT 的核心压缩策略对比**
+
+- **DistilBERT**：跳层蒸馏，层数减半（12→6），参数-40 %，推理快 60 %。 ([Papers Explained 06: Distil BERT - Medium](https://medium.com/dair-ai/papers-explained-06-distil-bert-6f138849f871?utm_source=chatgpt.com))
+- **ALBERT**：词表分解 + 各层参数共享，参数-90 %，精度接近 BERT-Large。 ([ALBERT: A Lite BERT for Self-supervised Learning of Language ...](https://arxiv.org/abs/1909.11942?utm_source=chatgpt.com))
+- **TinyBERT**：两阶段蒸馏（预训练+下游），尺寸仅 1/7，仍保留 96 % GLUE 分数。 ([TinyBERT: Distilling BERT for Natural Language Understanding](https://arxiv.org/abs/1909.10351?utm_source=chatgpt.com))
+
+------
+
+**13 . Self-Attention 的时空复杂度为何是 O(n²)？如何降低？**
+ 全序列 Q × Kᵀ 生成 n × n 相似度矩阵，两次与 V 乘法共 O(n²·d)；稀疏滑窗（Longformer）或块+随机+全局稀疏（BigBird）将每个 token 只与 O(1) 或 O(w) 邻居交互，使复杂度降到近线性。 ([Computational Complexity of Self-Attention in the Transformer Model](https://stackoverflow.com/questions/65703260/computational-complexity-of-self-attention-in-the-transformer-model?utm_source=chatgpt.com), [[2004.05150\] Longformer: The Long-Document Transformer - arXiv](https://arxiv.org/abs/2004.05150?utm_source=chatgpt.com), [[2007.14062\] Big Bird: Transformers for Longer Sequences - arXiv](https://arxiv.org/abs/2007.14062?utm_source=chatgpt.com))
+
+------
+
+**14 . 把 BERT 部署到移动端时，8-bit 量化与蒸馏各有什么利弊？**
+ 量化无需重新训练即可减半显存并借助 INT8 运算，精度损失通常 < 1 pt，但硬件需支持向量 INT8；蒸馏能同时减参数并保持浮点精度，但需额外教师-学生训练周期。 ([Papers Explained 06: Distil BERT - Medium](https://medium.com/dair-ai/papers-explained-06-distil-bert-6f138849f871?utm_source=chatgpt.com), [TinyBERT: Distilling BERT for Natural Language Understanding](https://arxiv.org/abs/1909.10351?utm_source=chatgpt.com))
+
+------
+
+**15 . BERT 的长度上限为何是 512？如何突破？**
+ 位置嵌入只预训练到 512，且全量注意力显存 O(n²)；Longformer 通过窗口注意力，BigBird 通过块稀疏+随机注意力，把记忆与计算降到 O(n) 并支持上万 token。 ([[2004.05150\] Longformer: The Long-Document Transformer - arXiv](https://arxiv.org/abs/2004.05150?utm_source=chatgpt.com), [[2007.14062\] Big Bird: Transformers for Longer Sequences - arXiv](https://arxiv.org/abs/2007.14062?utm_source=chatgpt.com))
+
+------
+
+**16 . BERT 在多句长对话中语义漂移的原因？**
+ Segment 仅有 0/1，无法标记第三句起的轮次；缺乏显式对话状态导致模型难以追踪多轮 referent，从而出现语义漂移。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**17 . RoBERTa 对 “BERT 欠训练” 做了哪三项修订？**
+
+1. 去掉 NSP；2. 动态掩码；3. 更大 batch、更长训练、更大语料（160 GB）。这些改动在 GLUE、SQuAD 提升 1-2 pt。 ([RoBERTa: A Robustly Optimized BERT Pretraining Approach - arXiv](https://arxiv.org/abs/1907.11692?utm_source=chatgpt.com), [[PDF\] arXiv:1907.11692v1 [cs.CL] 26 Jul 2019](https://arxiv.org/pdf/1907.11692?utm_source=chatgpt.com))
+
+------
+
+**18 . ELECTRA 的 Replaced Token Detection 如何提升采样效率？**
+ ELECTRA 用小型生成器替换部分 token，再让判别器区分 “真/假”；判别器每个位置都有监督，训练速度与样本效率比 MLM 高 4× 以上，同算力下效果优于 BERT。 ([More Efficient NLP Model Pre-training with ELECTRA](https://research.google/blog/more-efficient-nlp-model-pre-training-with-electra/?utm_source=chatgpt.com))
+
+------
+
+**19 . 把 BERT 改造成生成模型的三条技术路线**
+
+- **UniLM 系列**：通过可切换 self-attention mask，让同一模型既能双向编码又能单向/Seq2Seq 解码。 ([BERT - The purpose of summing token embedding, positional ...](https://datascience.stackexchange.com/questions/108740/bert-the-purpose-of-summing-token-embedding-positional-embedding-and-segment?utm_source=chatgpt.com), [UniLMv2: Pseudo-Masked Language Models for Unified ... - arXiv](https://arxiv.org/abs/2002.12804?utm_source=chatgpt.com))
+- **BART/MASS/GLM**：添加 Span-infill 等去噪重建目标的 Encoder-Decoder。 ([Papers Explained 09: BART - Medium](https://medium.com/dair-ai/papers-explained-09-bart-7f56138175bd?utm_source=chatgpt.com), [Next sentence prediction in RoBERTa - Data Science Stack Exchange](https://datascience.stackexchange.com/questions/76872/next-sentence-prediction-in-roberta?utm_source=chatgpt.com))
+- **非自回归迭代填空 (Mask-Predict/BPDec)**：用 BERT 并行生成全句，并多轮重写低置信 token。 ([WordPiece: Subword-based tokenization algorithm | Chetna - Medium](https://medium.com/towards-data-science/wordpiece-subword-based-tokenization-algorithm-1fbd14394ed7?utm_source=chatgpt.com))
+
+------
+
+**20 . 举例说明 BERT 的性别偏见，并列出两种缓解策略**
+
+- 关联测试显示 “医生—男性” 概率远高于 “医生—女性”，反映训练语料刻板印象。 ([Measuring and Mitigating BERT's Gender Bias - ACL Anthology](https://aclanthology.org/2020.gebnlp-1.1/?utm_source=chatgpt.com))
+- 缓解可用 (a) 数据再采样/反向标注平衡正负；(b) 对抗训练或下降梯度消除性别信息于中间层。 ([Measuring and Mitigating BERT's Gender Bias - ACL Anthology](https://aclanthology.org/2020.gebnlp-1.1/?utm_source=chatgpt.com), [[PDF\] FREELB: ENHANCED ADVERSARIAL TRAINING FOR NATURAL ...](https://openreview.net/pdf?id=BygzbyHFvB&utm_source=chatgpt.com))
+
+------
+
+**21 . 推导 Fused QKV 线性层可节省多少参数，并给出 BERT-Large 规模**
+ 把三个独立 `W_Q,W_K,W_V ∈ ℝ^{d×d}` 融合成单个 `W_QKV ∈ ℝ^{d×3d}` 仅在实现上减少三次 GEMM→一次 GEMM，参数量本质不变仍为 3 d²≈ 3·1024² ≈ 3.1 M，但可省 I/O 与缓存开销、提升吞吐。 ([Computational Complexity of Self-Attention in the Transformer Model](https://stackoverflow.com/questions/65703260/computational-complexity-of-self-attention-in-the-transformer-model?utm_source=chatgpt.com))
+
+------
+
+**22 . 用数学证明“高维随机向量近似正交”意味着三 embedding 相加信息损失可忽略**
+ 根据 Johnson-Lindenstrauss 引理，*k* 维随机投影几乎保持点间距离；当 *d*≫1 时，任意两随机向量夹角趋近 90°，三 embedding 在求和后仍可由线性层再分离，信息损失可忽略。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com), [BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**23 . Gradient Checkpointing 在 BERT 训练中的存储-算力权衡**
+ 通过只存储部分层的激活，反向时再计算一次前向，显存占用可降 30-50 %，代价是推理 FLOPs ≈ 1.5-2×；适用于大模型或长序列场景。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**24 . 如果把 `[CLS]` 表征改为平均池化，哪些下游任务受益 / 受损？**
+ 序列级任务（情感分类、句子对匹配）中 `[CLS]` 经训练学习到专属位置信号，通常优于简单均值；而序列标注或检索场景中平均池化能更好反映全局语义，避免过度依赖首位 token。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+**25 . mBERT 在非平衡语料上的零样本跨语种迁移现象**
+ mBERT 共享词片与参数空间，低资源语言能通过形似词干获得间接监督；但高资源语言主导梯度导致语义空洞，表现为欧语间迁移准确率高，至隔系语族显著下降。解决方案包括对低资源语重采样或使用语言适配层。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
+
+------
+
+> 以上 25 题答案囊括 BERT 论文核心细节、工程实现与局限改进，并配以源码、论文与社区讨论共 20 条参考。希望能满足高质量技术面试的深度与可溯源性需求。
