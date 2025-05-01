@@ -143,3 +143,14 @@ c_{i}(pos + k) &= \cos((pos + k)\omega_{i}) \\
 PE_{pos+k}=M(k)\:PE_{pos}.
 $$
 
+![image-20250430132651994](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430132651994.png)
+
+![image-20250430133903155](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430133903155.png)
+
+![image-20250430134043300](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430134043300.png)
+
+![image-20250430134940782](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430134940782.png)
+
+![image-20250430140518206](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430140518206.png)
+
+![image-20250430141748199](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430141748199.png)
