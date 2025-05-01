@@ -151,6 +151,10 @@ $$
 
 <img src="pictures\image-20250501112922984.png" alt="image-20250501112922984" style="zoom:50%;" />
 
+- 前馈神经网络中，各个`MLP`的权重是一致的，可以point wise的去对每个输出进行操作，因为attention机制已经采集了序列中全部的信息。但是在RNN中，得一步一步的传递序列信息，不像attention是一次就采集全部的信息，但是attention里面没有包含位置信息，所以需要加入位置编码。
+
+<img src="pictures\image-20250501135256944.png" alt="image-20250501135256944" style="zoom:50%;" />
+
 # Batch normalization and Layer normalization
 
 <img src="pictures\image-20250430132651994.png" alt="image-20250430132651994" style="zoom:33%;" />
