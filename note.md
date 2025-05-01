@@ -424,6 +424,3 @@ $$
 **25 . mBERT 在非平衡语料上的零样本跨语种迁移现象**
  mBERT 共享词片与参数空间，低资源语言能通过形似词干获得间接监督；但高资源语言主导梯度导致语义空洞，表现为欧语间迁移准确率高，至隔系语族显著下降。解决方案包括对低资源语重采样或使用语言适配层。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
 
-------
-
-> 以上 25 题答案囊括 BERT 论文核心细节、工程实现与局限改进，并配以源码、论文与社区讨论共 20 条参考。希望能满足高质量技术面试的深度与可溯源性需求。
