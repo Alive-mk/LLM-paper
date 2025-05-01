@@ -143,14 +143,19 @@ c_{i}(pos + k) &= \cos((pos + k)\omega_{i}) \\
 PE_{pos+k}=M(k)\:PE_{pos}.
 $$
 
-![image-20250430132651994](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430132651994.png)
+# Batch normalization and Layer normalization
 
-![image-20250430133903155](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430133903155.png)
+<img src="pictures\image-20250430132651994.png" alt="image-20250430132651994" style="zoom:33%;" />
 
-![image-20250430134043300](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430134043300.png)
+- 归一化作用：特征输入到激活函数之前，避免数据波动太大进而进入饱和区造成梯度消失
+- 归一化的形式  可以使用a和b来控制归一化后满足的特定分布
+- Layer normalization适用于**变长**数据
+- batch normalization换一批batch后，数据针对同一特征的均值和方差可能会很大；而且如果新的句子很长在训练过程中没有遇到过原来的均值和方差就不再适用
+- Layer normalization不需要记录全局的均值和方差计算更加方便，而且只针对于单个样本，更加稳定
 
-![image-20250430134940782](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430134940782.png)
+- 对于Laye normalization切片后可以指定归一化的shape，可以选择的是对最后一个维度归一化还是对正片数据进行归一化
 
-![image-20250430140518206](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430140518206.png)
+<img src="C:\Users\LX\Desktop\学习\LLM-paper\pictures\image-20250501101057975.png" alt="image-20250501101057975" style="zoom: 50%;" />
 
-![image-20250430141748199](C:\Users\LX\AppData\Roaming\Typora\typora-user-images\image-20250430141748199.png)
+<img src="pictures\image-20250501101143483.png" alt="image-20250501101143483" style="zoom:50%;" />
+
