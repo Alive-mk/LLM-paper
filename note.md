@@ -143,6 +143,14 @@ c_{i}(pos + k) &= \cos((pos + k)\omega_{i}) \\
 PE_{pos+k}=M(k)\:PE_{pos}.
 $$
 
+<img src="pictures\image-20250501112728575.png" alt="image-20250501112728575" style="zoom:50%;" />
+
+- 输出结果就是value的加权和，权重为query与key之间的相似度
+
+- 三个attention
+
+<img src="pictures\image-20250501112922984.png" alt="image-20250501112922984" style="zoom:50%;" />
+
 # Batch normalization and Layer normalization
 
 <img src="pictures\image-20250430132651994.png" alt="image-20250430132651994" style="zoom:33%;" />
@@ -158,4 +166,6 @@ $$
 <img src="C:\Users\LX\Desktop\学习\LLM-paper\pictures\image-20250501101057975.png" alt="image-20250501101057975" style="zoom: 50%;" />
 
 <img src="pictures\image-20250501101143483.png" alt="image-20250501101143483" style="zoom:50%;" />
+
+
 
