@@ -424,3 +424,20 @@ $$
 **25 . mBERT 在非平衡语料上的零样本跨语种迁移现象**
  mBERT 共享词片与参数空间，低资源语言能通过形似词干获得间接监督；但高资源语言主导梯度导致语义空洞，表现为欧语间迁移准确率高，至隔系语族显著下降。解决方案包括对低资源语重采样或使用语言适配层。 ([BERT: Pre-training of Deep Bidirectional Transformers for Language ...](https://arxiv.org/abs/1810.04805?utm_source=chatgpt.com))
 
+# **Mission: Impossible Language Models**
+
+<img src="pictures\image-20250504165707363.png" alt="image-20250504165707363" style="zoom:50%;" />
+
+<img src="pictures\image-20250504183445216.png" alt="image-20250504183445216" style="zoom:50%;" />
+
+<img src="pictures\image-20250504184300885.png" alt="image-20250504184300885" style="zoom:50%;" />
+
+<img src="pictures\image-20250504184743561.png" alt="image-20250504184743561" style="zoom:50%;" />
+
+<img src="pictures\image-20250504184833557.png" alt="image-20250504184833557" style="zoom:50%;" />
+
+<img src="pictures\image-20250504184926256.png" alt="image-20250504184926256" style="zoom:50%;" />
+
+<img src="pictures\image-20250504185031825.png" alt="image-20250504185031825" style="zoom:50%;" />
+
+<img src="pictures\image-20250504185107037.png" alt="image-20250504185107037" style="zoom:50%;" />
