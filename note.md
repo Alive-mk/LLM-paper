@@ -501,16 +501,32 @@ $$
 
 <img src="pictures\image-20250504193538853.png" alt="image-20250504193538853" style="zoom: 67%;" />
 
-<img src="pictures\image-20250504193627782.png" alt="image-20250504193627782" style="zoom:50%;" />
+<img src="pictures\image-20250504194318662.png" alt="image-20250504194318662" style="zoom: 67%;" />
 
 ------
 
 <img src="pictures\image-20250504184926256.png" alt="image-20250504184926256" style="zoom:50%;" />
 
+:point_up_2: 给模型两条输入（**base** 与 **source**），把某一层、某一位置的隐藏向量从 source 复制到 base，再继续前向传播，看输出会不会随之改变。如果“换血”后 base 的输出像 source，那就说明 **被替换的隐藏向量携带并因果地控制了目标信息**。
+
+幻灯片右边的示意图
+
+- **橙色**：base 句 *The man be …*（动词应加 P，因为 *man* 单数？或因 Hop 规则？）
+- **绿色**：source 句 *The men be …*（或已满足计数条件）
+- 紫色虚线：把第 *L* 层、第 *t* 个 token 的隐藏状态从绿色网络插到橙色网络。
+- **若注入后，橙色网络最终在动词处成功输出标记 P，就说明那层那位存放了“该不该加 P”的关键信息。**
+
+**Interchange-Intervention Accuracy (IIA)**
+ 在所有测试句上做一次全网格搜索（所有层 × 所有 token 位置），统计成功率作为 IIA 热图。数值越高→信息越集中、越可预测。
+
+<img src="pictures\image-20250504194513128.png" alt="image-20250504194513128" style="zoom:67%;" />
+
 ------
 
 <img src="pictures\image-20250504185031825.png" alt="image-20250504185031825" style="zoom:50%;" />
 
-------
+:3rd_place_medal: **语言与模型都偏爱“信息局域性”**
 
-<img src="pictures\image-20250504185107037.png" alt="image-20250504185107037" style="zoom:50%;" />
+<img src="pictures\image-20250504194719368.png" alt="image-20250504194719368" style="zoom:67%;" />
+
+GPT-2 之所以把“可能语言”当成“好学的语言”，核心在于双方共享**“信息局部化”**这一深层偏好；而反局域、需线性计数的规则既罕见于人类语言，也让模型学得费劲。
