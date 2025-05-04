@@ -466,16 +466,51 @@ $$
 - 如果某种“语言”要求使用线性计数或固定词位来决定形态变化，那就违反了人类语言的普遍约束，因此被称为“不可能语言”。
 - 通过这样的对比，研究者可以在实验中检验大语言模型（或人类）能否区分“可能”和“明显不可能”的语法机制。
 
+------
+
 <img src="pictures\image-20250504183445216.png" alt="image-20250504183445216" style="zoom:50%;" />
+
+:question: **GPT-2 这类语言模型在学习“可能—不可能”语言的难度梯度上，能否表现出和人类相似的偏好？**
+
+<img src="pictures\image-20250504191700358.png" alt="image-20250504191700358" style="zoom: 67%;" />
+
+<img src="pictures\image-20250504191855692.png" alt="image-20250504191855692" style="zoom: 67%;" />
+
+------
 
 <img src="pictures\image-20250504184300885.png" alt="image-20250504184300885" style="zoom:50%;" />
 
-<img src="pictures\image-20250504184743561.png" alt="image-20250504184743561" style="zoom:50%;" />
+:question: shuffle语言构造规则
+
+**impossibility continuum 不可能性连续谱**
+
+<img src="pictures\image-20250504192425123.png" alt="image-20250504192425123" style="zoom: 67%;" />
+
+------
 
 <img src="pictures\image-20250504184833557.png" alt="image-20250504184833557" style="zoom:50%;" />
 
+论文把英语改造成三种 *HOP* 语言，用特殊标记 **S/P** 代替三单 **-s**：
+
+- **NOHOP** 标记紧跟在动词后（最像英语，控制组）
+
+- **TOKENHOP** 标记放在动词后 **4 个 token** 处
+
+- **WORDHOP** 标记放在动词后 **4 个单词** 处
+   后两种必须“数”token/单词，属典型“线性计数”规则，被视为“不可能语言”的温和版本​​。
+
+<img src="pictures\image-20250504193538853.png" alt="image-20250504193538853" style="zoom: 67%;" />
+
+<img src="pictures\image-20250504193627782.png" alt="image-20250504193627782" style="zoom:50%;" />
+
+------
+
 <img src="pictures\image-20250504184926256.png" alt="image-20250504184926256" style="zoom:50%;" />
 
+------
+
 <img src="pictures\image-20250504185031825.png" alt="image-20250504185031825" style="zoom:50%;" />
+
+------
 
 <img src="pictures\image-20250504185107037.png" alt="image-20250504185107037" style="zoom:50%;" />
